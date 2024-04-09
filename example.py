@@ -1,5 +1,5 @@
 from RAG.VectorBase import VectorStore
-from RAG.utils import ReadFiles
+# from RAG.utils import ReadFiles
 from RAG.LLM import OpenAIChat, InternLMChat
 from RAG.Embeddings import JinaEmbedding, ZhipuEmbedding
 
@@ -30,6 +30,8 @@ question = '逆向纠错的原理是什么？'
 embedding = ZhipuEmbedding() # 创建EmbeddingModel
 
 content = vector.query(question, EmbeddingModel=embedding, k=1)[0]
-chat = OpenAIChat(model='gpt-3.5-turbo-1106')
-print(chat.chat(question, [], content))
+
+print(content)
+# chat = OpenAIChat(model='gpt-3.5-turbo-1106')
+# print(chat.chat(question, [], content))
 
