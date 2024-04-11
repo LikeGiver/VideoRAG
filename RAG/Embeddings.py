@@ -12,6 +12,7 @@ import os
 from copy import copy
 from typing import Dict, List, Optional, Tuple, Union
 import numpy as np
+from PIL import Image
 
 from dotenv import load_dotenv, find_dotenv
 _ = load_dotenv(find_dotenv())
@@ -65,15 +66,15 @@ class CNCLIP_Embedding(BaseEmbeddings):
         super().__init__(path, is_api)
         self._model, self._processor = self._load_model()
         
-    def get_embedding(self, text=None, image=None) -> List[float]:
+    def get_embedding(self, text: str = None, image: Image = None) -> List[float]:
         if text is None and image is None:
             raise ValueError("You have to specify either text or image. Both cannot be none.")
         if text is not None:
             inputs = self._processor(text=[text], padding=True, return_tensors="pt")
-            return self._model.get_text_features(**inputs)[0]
+            return self._model.get_text_features(**inputs)[0].detach().numpy()
         if image is not None:
             inputs = self._processor(images=image, return_tensors="pt")
-            return self._model.get_image_features(**inputs)[0]
+            return self._model.get_image_features(**inputs)[0].detach().numpy()
             
     def _load_model(self):
         from transformers import ChineseCLIPProcessor, ChineseCLIPModel

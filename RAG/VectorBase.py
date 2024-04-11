@@ -12,16 +12,12 @@ import os
 from typing import Dict, List, Optional, Tuple, Union
 import json
 from RAG.Embeddings import BaseEmbeddings
+from RAG.utils import load_image
 import numpy as np
-from PIL import Image
 from tqdm import tqdm
 
 AUTOSAVE_PATH = 'storage'
 AUTOLOAD_PATH = 'storage'
-
-def load_image(path: str) -> Image:
-    """Load an image from a path."""
-    return Image.open(path)
 
 class VectorStore:
     def __init__(self, auto_load: bool = False, load_path: str = AUTOLOAD_PATH) -> None:
@@ -96,12 +92,51 @@ class VectorStore:
             
     def get_similarity(self, vector1: List[float], vector2: List[float]) -> float:
         return BaseEmbeddings.cosine_similarity(vector1, vector2)
+    
+    # def query(self, text_query: str = None, image_path_query: str = None, EmbeddingModel = None, text_k: int = 1, image_k: int = 0) -> List[str]:
+    #     if text_query is None and image_path_query is None:
+    #         raise ValueError("You have to specify either text_query or image_path_query. Both cannot be none.")
+    #     if EmbeddingModel is None:
+    #         raise ValueError("An embedding model must be provided.")
+        
+    #     # 根据查询类型获取查询向量
+    #     if text_query:
+    #         query_vector = EmbeddingModel.get_embedding(text=text_query).tolist()
+    #     elif image_path_query:
+    #         image = load_image(image_path_query)
+    #         query_vector = EmbeddingModel.get_embedding(image=image).tolist()
 
-    def query(self, text_query: str = None, image_path_query: str = None, EmbeddingModel: BaseEmbeddings = None, k: int = 1) -> List[str]:
+    #     # 计算所有向量与查询向量的相似度
+    #     similarities = []
+    #     for unique_id, vector_info in self.vectors.items():
+    #         vector = vector_info['vector']
+    #         similarity = self.get_similarity(query_vector, vector)
+    #         similarities.append((unique_id, similarity, vector_info['type']))
+
+    #     # 分别对文本和图像结果应用不同的top_k值
+    #     text_results = [unique_id for unique_id, _, vector_type in similarities if vector_type == 'text']
+    #     image_results = [unique_id for unique_id, _, vector_type in similarities if vector_type == 'image']
+
+    #     # 根据相似度排序，并获取最相似的前top_k个结果的ID
+    #     sorted_text_results = sorted(text_results, key=lambda x: next(sim for sim in similarities if sim[0] == x)[1], reverse=True)[:text_k]
+    #     sorted_image_results = sorted(image_results, key=lambda x: next(sim for sim in similarities if sim[0] == x)[1], reverse=True)[:image_k]
+
+    #     # 根据ID获取对应的内容或路径
+    #     results = []
+    #     for unique_id in sorted_text_results + sorted_image_results:
+    #         if self.vectors[unique_id]['type'] == 'text':
+    #             results.append(self.vectors[unique_id]['content'])
+    #         elif self.vectors[unique_id]['type'] == 'image':
+    #             results.append(self.vectors[unique_id]['path'])
+
+    #     return results
+    
+    def query(self, text_query: str = None, image_path_query: str = None, EmbeddingModel = None, text_k: int = 1, image_k: int = 0) -> Tuple[List[str], List[float]]:
         if text_query is None and image_path_query is None:
             raise ValueError("You have to specify either text_query or image_path_query. Both cannot be none.")
         if EmbeddingModel is None:
-            raise ValueError("An embedding model must be provided.")       
+            raise ValueError("An embedding model must be provided.")
+        
         # 根据查询类型获取查询向量
         if text_query:
             query_vector = EmbeddingModel.get_embedding(text=text_query).tolist()
@@ -114,18 +149,27 @@ class VectorStore:
         for unique_id, vector_info in self.vectors.items():
             vector = vector_info['vector']
             similarity = self.get_similarity(query_vector, vector)
-            similarities.append((unique_id, similarity))
+            similarities.append((unique_id, similarity, vector_info['type']))
 
-        # 根据相似度排序，并获取最相似的前k个结果的ID
-        similarities.sort(key=lambda x: x[1], reverse=True)
-        top_k_ids = similarities[:k]
+        # 分别对文本和图像结果应用不同的top_k值，并记录相似度
+        text_results_with_sim = sorted(
+            [(unique_id, sim) for unique_id, sim, vector_type in similarities if vector_type == 'text'],
+            key=lambda x: x[1], reverse=True
+        )[:text_k]
+        
+        image_results_with_sim = sorted(
+            [(unique_id, sim) for unique_id, sim, vector_type in similarities if vector_type == 'image'],
+            key=lambda x: x[1], reverse=True
+        )[:image_k]
 
-        # 根据ID获取对应的内容或路径
-        results = []
-        for unique_id, _ in top_k_ids:
+        # 提取结果和相似度
+        results, sims = [], []
+        for unique_id, sim in text_results_with_sim + image_results_with_sim:
             if self.vectors[unique_id]['type'] == 'text':
                 results.append(self.vectors[unique_id]['content'])
             elif self.vectors[unique_id]['type'] == 'image':
                 results.append(self.vectors[unique_id]['path'])
+            sims.append(sim)
 
-        return results
+        return results, sims
+

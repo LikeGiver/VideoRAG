@@ -19,9 +19,13 @@ from tqdm import tqdm
 import tiktoken
 from bs4 import BeautifulSoup
 import re
+from PIL import Image
 
 enc = tiktoken.get_encoding("cl100k_base")
 
+def load_image(path: str) -> Image:
+    """Load an image from a path."""
+    return Image.open(path)
 
 class ReadFiles:
     """
