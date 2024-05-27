@@ -222,3 +222,6 @@ model/
 *.yaml
 
 chinese-clip-vit-large-patch14/
+Qwen-VL/
+image_data/
+SimSun.ttf

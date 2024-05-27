@@ -88,48 +88,9 @@ class VectorStore:
                 self.vectors = json.load(f)
         else:
             print(f"No vectors found at {vectors_path}. Starting with an empty store.")
-
-            
+    
     def get_similarity(self, vector1: List[float], vector2: List[float]) -> float:
         return BaseEmbeddings.cosine_similarity(vector1, vector2)
-    
-    # def query(self, text_query: str = None, image_path_query: str = None, EmbeddingModel = None, text_k: int = 1, image_k: int = 0) -> List[str]:
-    #     if text_query is None and image_path_query is None:
-    #         raise ValueError("You have to specify either text_query or image_path_query. Both cannot be none.")
-    #     if EmbeddingModel is None:
-    #         raise ValueError("An embedding model must be provided.")
-        
-    #     # 根据查询类型获取查询向量
-    #     if text_query:
-    #         query_vector = EmbeddingModel.get_embedding(text=text_query).tolist()
-    #     elif image_path_query:
-    #         image = load_image(image_path_query)
-    #         query_vector = EmbeddingModel.get_embedding(image=image).tolist()
-
-    #     # 计算所有向量与查询向量的相似度
-    #     similarities = []
-    #     for unique_id, vector_info in self.vectors.items():
-    #         vector = vector_info['vector']
-    #         similarity = self.get_similarity(query_vector, vector)
-    #         similarities.append((unique_id, similarity, vector_info['type']))
-
-    #     # 分别对文本和图像结果应用不同的top_k值
-    #     text_results = [unique_id for unique_id, _, vector_type in similarities if vector_type == 'text']
-    #     image_results = [unique_id for unique_id, _, vector_type in similarities if vector_type == 'image']
-
-    #     # 根据相似度排序，并获取最相似的前top_k个结果的ID
-    #     sorted_text_results = sorted(text_results, key=lambda x: next(sim for sim in similarities if sim[0] == x)[1], reverse=True)[:text_k]
-    #     sorted_image_results = sorted(image_results, key=lambda x: next(sim for sim in similarities if sim[0] == x)[1], reverse=True)[:image_k]
-
-    #     # 根据ID获取对应的内容或路径
-    #     results = []
-    #     for unique_id in sorted_text_results + sorted_image_results:
-    #         if self.vectors[unique_id]['type'] == 'text':
-    #             results.append(self.vectors[unique_id]['content'])
-    #         elif self.vectors[unique_id]['type'] == 'image':
-    #             results.append(self.vectors[unique_id]['path'])
-
-    #     return results
     
     def query(self, text_query: str = None, image_path_query: str = None, EmbeddingModel = None, text_k: int = 1, image_k: int = 0) -> Tuple[List[str], List[float]]:
         if text_query is None and image_path_query is None:
