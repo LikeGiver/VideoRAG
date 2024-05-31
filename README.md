@@ -1,6 +1,9 @@
 # VideoRAG
 本项目探索针对长视频对话的RAG系统，旨在实现第一人称视角下的长视频问答，实现辅助记忆效果。
 
+# 整体工作流程
+![整体工作流程](./images/overall_workflow.png)
+
 ## TODO
 1. 扩展数据库到支持图片（存储以及混合模态查询，基于Chinese-CLIP）✅
 2. 测试基于视频抽帧的RAG效果(基于Qwen-VL) ✅
