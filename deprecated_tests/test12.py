@@ -1,0 +1,50 @@
+import jieba
+from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
+from nltk.translate.meteor_score import single_meteor_score
+from rouge_score import rouge_scorer
+
+# 分词处理
+def tokenize(text):
+    return ' '.join(jieba.cut(text))
+
+# 计算相似度分数
+def calculate_scores(answer, response):
+    answer_tokens = tokenize(answer)
+    response_tokens = tokenize(response)
+    
+    # BLEU 分数
+    smoothie = SmoothingFunction().method4
+    bleu_score = sentence_bleu([answer_tokens.split()], response_tokens.split(), smoothing_function=smoothie)
+    
+    # METEOR 分数
+    meteor = single_meteor_score(set(answer), set(response))
+    
+    print(answer_tokens)
+    # ROUGE-L 分数
+    rouge = rouge_scorer.RougeScorer(['rougeL'], use_stemmer=False)
+    rouge_scores = rouge.score([answer_tokens.split()], [response_tokens.split()])
+    rougeL_fmeasure = rouge_scores['rougeL'].fmeasure
+    
+    return bleu_score, meteor, rougeL_fmeasure
+
+# 示例
+question = "她放下帽子后，帽子在哪里？"
+answer = "在衣柜里"
+response = "在衣柜里。"
+
+bleu, meteor, rougeL = calculate_scores(answer, response)
+print(f"Question: {question}")
+print(f"Answer: {answer}")
+print(f"Response: {response}")
+print(f"BLEU: {bleu}")
+print(f"METEOR: {meteor}")
+print(f"ROUGE-L: {rougeL}")
+
+# 检查平均分
+scores = {'bleu': [], 'meteor': [], 'rougeL_fmeasure': []}
+scores['bleu'].append(bleu)
+scores['meteor'].append(meteor)
+scores['rougeL_fmeasure'].append(rougeL)
+
+avg_scores = {metric: sum(values) / len(values) for metric, values in scores.items()}
+print("Average Scores:", avg_scores)

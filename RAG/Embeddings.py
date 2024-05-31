@@ -64,23 +64,32 @@ class BaseEmbeddings:
 class CNCLIP_Embedding(BaseEmbeddings):
     def __init__(self, path: str = '', is_api: bool = False) -> None:
         super().__init__(path, is_api)
-        self._model, self._processor = self._load_model()
+        self._model, self._processor, self._device = self._load_model()
         
     def get_embedding(self, text: str = None, image: Image = None) -> List[float]:
+        """
+        text will be cut off to the length of 500.
+        """
         if text is None and image is None:
             raise ValueError("You have to specify either text or image. Both cannot be none.")
         if text is not None:
+            text = text[:500]
             inputs = self._processor(text=[text], padding=True, return_tensors="pt")
-            return self._model.get_text_features(**inputs)[0].detach().numpy()
+            inputs = {key: val.to(self._device) for key, val in inputs.items()} 
+            return self._model.get_text_features(**inputs)[0].detach().cpu().numpy()
         if image is not None:
             inputs = self._processor(images=image, return_tensors="pt")
-            return self._model.get_image_features(**inputs)[0].detach().numpy()
+            inputs = {key: val.to(self._device) for key, val in inputs.items()} 
+            return self._model.get_image_features(**inputs)[0].detach().cpu().numpy()
             
     def _load_model(self):
         from transformers import ChineseCLIPProcessor, ChineseCLIPModel
+        import torch
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model = ChineseCLIPModel.from_pretrained("OFA-Sys/chinese-clip-vit-large-patch14", cache_dir=CN_CLIP_CACHE_DIR, local_files_only=True)
+        model.to(device)
         processor = ChineseCLIPProcessor.from_pretrained("OFA-Sys/chinese-clip-vit-large-patch14", cache_dir=CN_CLIP_CACHE_DIR, local_files_only=True)
-        return model, processor
+        return model, processor, device
     
 # class JinaEmbedding(BaseEmbeddings):
 #     """

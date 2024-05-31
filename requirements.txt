@@ -12,3 +12,4 @@ markdown
 html2text
 tiktoken
 beautifulsoup4
+jieba
