@@ -35,3 +35,6 @@ pip install accelerate
 2. 向量数据库建立  
 python test_upload.py
 3. 查询与答案生成
+
+## 效果
+![青椒例子的效果](./images/output.png)
